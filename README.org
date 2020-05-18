@@ -1,0 +1,122 @@
+#+TITLE: Bitcoin keys overview
+#+PROPERTY: header-args:python :session *shell bitcoin-keys python* :results silent raw
+
+** System environment
+
+- CentOS Linux release 8.1.1911 (Core)
+
+- Python 3.7.6
+
+Python modules:
+
+- base58check==1.0.2
+
+- ecdsa==0.15
+
+** Imports
+
+#+BEGIN_SRC python
+import base58check
+import base64
+import ecdsa
+import hashlib
+import os
+#+END_SRC
+
+** Parameters
+*** Testnet flag
+
+#+BEGIN_SRC python
+testnet = True
+#+END_SRC
+
+*** Compressed public key
+
+#+BEGIN_SRC python
+compressed_pubkey = True
+#+END_SRC
+
+** Private data load
+
+One of followed is needed.
+
+*** Generate random key
+
+#+BEGIN_SRC python :results value
+raw_key = os.urandom(256 // 8)
+#+END_SRC
+
+*** From hex variable
+
+#+BEGIN_SRC python
+data = "F72A6DB7A89BFCBEEFAAFFD2AEADDAE3C7F1913C4806B85E893A24E678D8BAA5"
+raw_key = bytes.fromhex(data)
+#+END_SRC
+
+*** From base64
+
+#+BEGIN_SRC python
+data = "9yptt6ib/L7vqv/Srq3a48fxkTxIBrheiTok5njYuqU="
+raw_key = base64.b64decode(data)
+#+END_SRC
+
+** Convert to the WIF format
+*** Select prefix
+
+#+BEGIN_SRC python
+if testnet:
+    prefix = bytes([0xef])
+else:
+    prefix = bytes([0x80])
+#+END_SRC
+
+*** Build extended key
+
+#+BEGIN_SRC python
+extended_key = prefix + raw_key
+if compressed_pubkey:
+    extended_key += bytes([0x01])
+#+END_SRC
+
+*** Calculate checksum
+
+#+BEGIN_SRC python
+first_sha = hashlib.sha256(extended_key).digest()
+second_sha = hashlib.sha256(first_sha).digest()
+checksummed_address = extended_key + second_sha[:4]
+#+END_SRC
+
+*** Base58Check
+
+#+BEGIN_SRC python
+wif = base58check.b58encode(checksummed_address)
+#+END_SRC
+
+** Generate public key
+*** ECDSA objects create
+
+#+BEGIN_SRC python
+ecdsa_privkey = ecdsa.SigningKey.from_string(raw_key, curve=ecdsa.SECP256k1)
+ecdsa_pubkey = ecdsa_privkey.get_verifying_key()
+#+END_SRC
+
+*** Uncompressed
+
+#+BEGIN_SRC python
+pubkey_uncompressed = pubkey_obj.to_string("uncompressed")
+#+END_SRC
+
+*** Compressed
+
+#+BEGIN_SRC python
+pubkey_compressed = pubkey_obj.to_string("compressed")
+#+END_SRC
+
+** References
+
+- https://bitcoin.org/en/wallets-guide
+
+- https://bitcoinpaperwallet.com/bitcoinpaperwallet/generate-wallet.html
+
+- https://walletgenerator.net
+
