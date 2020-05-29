@@ -42,75 +42,161 @@ One of followed is needed.
 
 *** Generate random key
 
-#+BEGIN_SRC python :results value
+#+BEGIN_SRC python :results replace code
 raw_key = os.urandom(256 // 8)
+raw_key
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b"\x9bB\xd2\xf5@t\xe3\xb6lq\x9e\xb4!\xae\x84\xe0\x17$\xca:$r\xca'\x9c\x1c\xc2\x14\xd1\x838\x1b"
+#+end_src
 
 *** From hex variable
 
-#+BEGIN_SRC python
-data = "F72A6DB7A89BFCBEEFAAFFD2AEADDAE3C7F1913C4806B85E893A24E678D8BAA5"
+#+BEGIN_SRC python :results replace code
+data = "6f28588e2a435db5e3166c630067ba7b8c4fdf2455c635d9dbc5fb90dd4f3c37"
 raw_key = bytes.fromhex(data)
+raw_key
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'o(X\x8e*C]\xb5\xe3\x16lc\x00g\xba{\x8cO\xdf$U\xc65\xd9\xdb\xc5\xfb\x90\xddO<7'
+#+end_src
 
 *** From base64
 
-#+BEGIN_SRC python
+#+BEGIN_SRC python :results replace code
 data = "9yptt6ib/L7vqv/Srq3a48fxkTxIBrheiTok5njYuqU="
 raw_key = base64.b64decode(data)
+raw_key
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'\xf7*m\xb7\xa8\x9b\xfc\xbe\xef\xaa\xff\xd2\xae\xad\xda\xe3\xc7\xf1\x91<H\x06\xb8^\x89:$\xe6x\xd8\xba\xa5'
+#+end_src
 
 ** Convert to the WIF format
 *** Select prefix
 
-#+BEGIN_SRC python
-if testnet:
-    prefix = bytes([0xef])
-else:
-    prefix = bytes([0x80])
+#+BEGIN_SRC python :results replace code
+prefix = bytes([0xef]) if testnet else bytes([0x80])
+prefix
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'\xef'
+#+end_src
 
 *** Build extended key
 
-#+BEGIN_SRC python
+#+BEGIN_SRC python :results replace code
 extended_key = prefix + raw_key
 if compressed_pubkey:
     extended_key += bytes([0x01])
+extended_key
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'\xefo(X\x8e*C]\xb5\xe3\x16lc\x00g\xba{\x8cO\xdf$U\xc65\xd9\xdb\xc5\xfb\x90\xddO<7\x01'
+#+end_src
 
 *** Calculate checksum
 
-#+BEGIN_SRC python
+#+BEGIN_SRC python :results replace code
 first_sha = hashlib.sha256(extended_key).digest()
-second_sha = hashlib.sha256(first_sha).digest()
-checksummed_address = extended_key + second_sha[:4]
+first_sha
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'1\xeai\x006Iui\xa4<\x07\x1b\xaa0\xaa\xf2-d\xfc"ej\xabX\xfdg\xc5|-\xb2U_'
+#+end_src
+
+#+BEGIN_SRC python :results replace code
+second_sha = hashlib.sha256(first_sha).digest()
+second_sha
+#+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'M\x1cB]\x8b`<\x14\x92\xd1\xad\x93\x12\x9a\x0f|\xa1\x9d\xd9\x03:"\x9a:\xa1%+\x16MF\x06\xa1'
+#+end_src
+
+#+BEGIN_SRC python :results replace code
+checksummed_address = extended_key + second_sha[:4]
+checksummed_address
+#+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'\xefo(X\x8e*C]\xb5\xe3\x16lc\x00g\xba{\x8cO\xdf$U\xc65\xd9\xdb\xc5\xfb\x90\xddO<7\x01M\x1cB]'
+#+end_src
 
 *** Base58Check
 
-#+BEGIN_SRC python
+#+BEGIN_SRC python :results replace code
 wif = base58check.b58encode(checksummed_address)
+wif
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'cRJn3jdsNELk5oefYT4SfSJaGoq2dwpfbnwcuYkJ2Q2vPLBcMhZn'
+#+end_src
 
 ** Generate public key
-*** ECDSA objects create
+*** Create ECDSA privkey
 
-#+BEGIN_SRC python
+#+BEGIN_SRC python :results replace code
 ecdsa_privkey = ecdsa.SigningKey.from_string(raw_key, curve=ecdsa.SECP256k1)
-ecdsa_pubkey = ecdsa_privkey.get_verifying_key()
+ecdsa_privkey
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+<ecdsa.keys.SigningKey object at 0x7f46574f76a0>
+#+end_src
+
+*** Create ECDSA pubkey
+
+#+BEGIN_SRC python :results replace code
+ecdsa_pubkey = ecdsa_privkey.get_verifying_key()
+ecdsa_pubkey
+#+END_SRC
+
+#+RESULTS:
+#+begin_src python
+VerifyingKey.from_string(b'\x03\x929\xfb\xe7R\xcb\xfa\x11\x1f\xf3\x10\xbb\xb9?\x9e)\x8c\xe4\xa9\xbd\xe1\xca\xe83\x7f\xb7Q\x08-F\xf8\x11', SECP256k1, sha1)
+#+end_src
 
 *** Uncompressed
 
-#+BEGIN_SRC python
-pubkey_uncompressed = pubkey_obj.to_string("uncompressed")
+#+BEGIN_SRC python :results replace code
+pubkey_uncompressed = ecdsa_pubkey.to_string("uncompressed")
+pubkey_uncompressed
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'\x04\x929\xfb\xe7R\xcb\xfa\x11\x1f\xf3\x10\xbb\xb9?\x9e)\x8c\xe4\xa9\xbd\xe1\xca\xe83\x7f\xb7Q\x08-F\xf8\x113\xa4\xba\xce\x8d\x17\x99B\x02\x00\xad\xc1\x9f5B\xcaa3\xee\xd2\xdd\rh1\xdey!\xf2\xb5*;\xeb'
+#+end_src
 
 *** Compressed
 
-#+BEGIN_SRC python
-pubkey_compressed = pubkey_obj.to_string("compressed")
+#+BEGIN_SRC python :results replace code
+pubkey_compressed = ecdsa_pubkey.to_string("compressed")
+pubkey_compressed
 #+END_SRC
+
+#+RESULTS:
+#+begin_src python
+b'\x03\x929\xfb\xe7R\xcb\xfa\x11\x1f\xf3\x10\xbb\xb9?\x9e)\x8c\xe4\xa9\xbd\xe1\xca\xe83\x7f\xb7Q\x08-F\xf8\x11'
+#+end_src
 
 ** References
 
